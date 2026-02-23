@@ -14,7 +14,8 @@ def register(app: typer.Typer) -> None:
         except ImportError:
             exit_with_error(
                 ImgToolError(
-                    "GUI dependencies are not installed. Install with: pip install \"imgtool[gui]\""
+                    "GUI dependencies are not installed. Install with: poetry install --extras \"gui\" "
+                    "(or pip install \"imgtool[gui]\")."
                 )
             )
 

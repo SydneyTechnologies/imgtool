@@ -9,7 +9,8 @@ def launch_gui() -> None:
         import dearpygui.dearpygui as dpg  # type: ignore
     except ImportError as exc:
         raise ImgToolError(
-            "DearPyGui is not installed. Install with: pip install \"imgtool[gui]\""
+            "DearPyGui is not installed. Install with: poetry install --extras \"gui\" "
+            "(or pip install \"imgtool[gui]\")."
         ) from exc
 
     view = ResizeView(dpg_module=dpg)
