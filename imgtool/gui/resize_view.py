@@ -10,6 +10,8 @@ from imgtool.utils.validation import validate_quality, validate_resize_dimension
 
 
 class ResizeView:
+    PREVIEW_SIZE = 420
+
     def __init__(self, dpg_module) -> None:
         self.dpg = dpg_module
         self.processor = ImageProcessor()
@@ -36,10 +38,10 @@ class ResizeView:
         dpg = self.dpg
 
         with dpg.texture_registry(tag=self.texture_registry_tag, show=False):
-            dpg.add_static_texture(
-                width=1,
-                height=1,
-                default_value=[0.0, 0.0, 0.0, 1.0],
+            dpg.add_dynamic_texture(
+                width=self.PREVIEW_SIZE,
+                height=self.PREVIEW_SIZE,
+                default_value=[0.0] * (self.PREVIEW_SIZE * self.PREVIEW_SIZE * 4),
                 tag=self.preview_texture_tag,
             )
 
@@ -114,7 +116,12 @@ class ResizeView:
             dpg.add_text("", tag=self.status_tag, wrap=940)
             dpg.add_separator()
             dpg.add_text("Preview")
-            dpg.add_image(self.preview_texture_tag, width=420, height=420, tag=self.preview_image_tag)
+            dpg.add_image(
+                self.preview_texture_tag,
+                width=self.PREVIEW_SIZE,
+                height=self.PREVIEW_SIZE,
+                tag=self.preview_image_tag,
+            )
 
     def _on_file_selected(self, sender, app_data, user_data) -> None:
         _ = sender, user_data
@@ -128,31 +135,19 @@ class ResizeView:
         try:
             with Image.open(input_path) as image:
                 preview = image.convert("RGBA")
-                preview.thumbnail((420, 420), Image.Resampling.LANCZOS)
-                width, height = preview.size
-                pixels = [
-                    channel / 255.0 for pixel in preview.getdata() for channel in pixel  # RGBA floats
-                ]
+                preview.thumbnail((self.PREVIEW_SIZE, self.PREVIEW_SIZE), Image.Resampling.LANCZOS)
+
+                canvas = Image.new("RGBA", (self.PREVIEW_SIZE, self.PREVIEW_SIZE), (0, 0, 0, 255))
+                offset_x = (self.PREVIEW_SIZE - preview.width) // 2
+                offset_y = (self.PREVIEW_SIZE - preview.height) // 2
+                canvas.paste(preview, (offset_x, offset_y))
+
+                pixels = [channel / 255.0 for pixel in canvas.getdata() for channel in pixel]
         except Exception as exc:
             self._set_status(f"Preview failed: {exc}")
             return
 
-        dpg = self.dpg
-        if dpg.does_item_exist(self.preview_texture_tag):
-            dpg.delete_item(self.preview_texture_tag)
-        with dpg.texture_registry(tag=self.texture_registry_tag, show=False):
-            dpg.add_static_texture(
-                width=width,
-                height=height,
-                default_value=pixels,
-                tag=self.preview_texture_tag,
-            )
-        dpg.configure_item(
-            self.preview_image_tag,
-            texture_tag=self.preview_texture_tag,
-            width=width,
-            height=height,
-        )
+        self.dpg.set_value(self.preview_texture_tag, pixels)
 
     def _export_image(self) -> None:
         if self.input_path is None:
