@@ -57,11 +57,17 @@ pipx run twine check dist/*
 ## Publish
 
 ```bash
-# publish prebuilt artifacts in dist/
-poetry publish
+# bump patch version, commit, and create tag (for example v0.1.1)
+poetry run publish
 
-# or build and publish in one step
-poetry publish --build
+# bump minor instead
+poetry run publish --bump minor
+
+# set an explicit version
+poetry run publish --version 0.2.0
+
+# push commit and tag to origin (triggers tag-based publish workflow)
+poetry run publish --push
 ```
 
 A GitHub Actions workflow is included at `.github/workflows/publish.yml`.

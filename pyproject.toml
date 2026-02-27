@@ -30,6 +30,7 @@ all = ["dearpygui>=1.11.1", "textract==1.6.3"]
 
 [project.scripts]
 imgsh = "imgsh.cli.main:run"
+publish = "imgsh.publish:run"
 
 [project.urls]
 Homepage = "https://github.com/SydneyTechnologies/imgsh"
